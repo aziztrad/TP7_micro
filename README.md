@@ -1,155 +1,281 @@
-# Architecture Microservices avec gRPC, Kafka, REST et GraphQL
+# Plateforme de Microservices Multi-Protocoles
 
-Ce projet démontre une architecture microservices construite avec Node.js, mettant en œuvre la communication via gRPC, Kafka, et une passerelle API fournissant des points d'accès REST et GraphQL.
+Ce projet implémente une architecture moderne de microservices utilisant Node.js avec plusieurs protocoles de communication : gRPC pour les appels inter-services, Apache Kafka pour la messagerie événementielle, et une API Gateway exposant des interfaces REST et GraphQL.
 
-## Vue d'ensemble de l'Architecture
+## Architecture du Système
 
-Le système se compose de :
+![Architecture](https://via.placeholder.com/800x400?text=Architecture+Microservices)
 
-- **Microservice Films** : Gère les données des films, communique via gRPC
-- **Microservice Séries TV** : Gère les données des séries TV, communique via gRPC
-- **Passerelle API** : Point d'entrée pour les clients, fournit des points d'accès REST et GraphQL
-- **Kafka** : Utilisé pour la communication asynchrone entre les services
+L'architecture se compose de :
 
-## Prérequis
+- **Service Contenu Cinématographique** : Gestion des données relatives aux films
+- **Service Contenu Télévisuel** : Gestion des données relatives aux séries
+- **Passerelle d'Agrégation** : Interface unifiant les services backend pour les clients
+- **Bus d'Événements** : Système de messagerie asynchrone basé sur Kafka
 
-- Node.js (v14+)
-- Apache Kafka et Zookeeper en exécution locale
-- npm
+## Technologies Utilisées
 
-## Installation
+- **Backend** : Node.js
+- **Communication Synchrone** : gRPC (Google Remote Procedure Call)
+- **Communication Asynchrone** : Apache Kafka
+- **API** : REST et GraphQL
+- **Stockage** : Mémoire interne (remplaçable par une DB)
 
-1. Installer les dépendances :
+## Démarrage Rapide
+
+### Environnement Requis
+
+- Node.js version 14 ou supérieure
+- Apache Kafka 3.x
+- Apache Zookeeper
+
+### Installation
+
 ```bash
+# Cloner le dépôt
+git clone https://github.com/votre-username/microservices-platform.git
+cd microservices-platform
+
+# Installer les dépendances des trois services
 npm install
 ```
 
-2. Démarrer Zookeeper et Kafka :
-```bash
-# Démarrer Zookeeper
-bin\windows\zookeeper-server-start.sh config/zookeeper.properties
+### Configuration de Kafka
 
-# Démarrer Kafka
-bin\windows\kafka-server-start.sh config/server.properties
+1. Démarrer l'écosystème Kafka :
+
+```bash
+# Démarrer Zookeeper (premier terminal)
+cd [dossier-kafka]
+bin\windows\zookeeper-server-start.bat config\zookeeper.properties
+
+# Démarrer le broker Kafka (second terminal)
+cd [dossier-kafka]
+bin\windows\kafka-server-start.bat config\server.properties
 ```
 
-3. Créer les topics Kafka :
+2. Créer les canaux de communication :
+
 ```bash
-bin\windows\kafka-topics.bat --create --partitions 1 --replication-factor 1 --topic movies_topic --bootstrap-server localhost:9092
-bin\windows\kafka-topics.bat --create --partitions 1 --replication-factor 1 --topic tvshows_topic --bootstrap-server localhost:9092
+# Créer le topic pour les événements liés aux films
+bin\windows\kafka-topics.bat --create --topic cinema-events --partitions 1 --replication-factor 1 --bootstrap-server localhost:9092
+
+# Créer le topic pour les événements liés aux séries
+bin\windows\kafka-topics.bat --create --topic television-events --partitions 1 --replication-factor 1 --bootstrap-server localhost:9092
 ```
 
-## Lancement des Microservices
+### Démarrage des Services
 
-Démarrer chaque composant dans un terminal séparé :
+Lancer chaque service dans un terminal séparé :
 
-1. Démarrer le Microservice Films :
 ```bash
-node movieMicroservice.js
+# Service Cinématographique
+node cinema-service.js
+
+# Service Télévisuel
+node television-service.js
+
+# Passerelle d'API
+node api-gateway.js
 ```
 
-2. Démarrer le Microservice Séries TV :
-```bash
-node tvShowMicroservice.js
-```
+## Utilisation des API
 
-3. Démarrer la Passerelle API :
-```bash
-node apiGateway.js
-```
+### Interface REST
 
-## Utilisation de l'API
+La passerelle expose les endpoints REST suivants sur `http://localhost:3000` :
 
-### Points d'accès REST
+#### Endpoints Films
 
-- **GET /movies** - Obtenir tous les films
-- **GET /movies/:id** - Obtenir un film spécifique
-- **POST /movies** - Créer un nouveau film
-- **GET /tvshows** - Obtenir toutes les séries TV
-- **GET /tvshows/:id** - Obtenir une série TV spécifique
-- **POST /tvshows** - Créer une nouvelle série TV
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | /api/cinema | Récupérer tous les films |
+| GET | /api/cinema/:id | Récupérer un film spécifique |
+| POST | /api/cinema | Créer un nouveau film |
+| PUT | /api/cinema/:id | Mettre à jour un film |
+| DELETE | /api/cinema/:id | Supprimer un film |
 
-### GraphQL
+#### Endpoints Séries
 
-Point d'accès GraphQL : http://localhost:3000/graphql
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | /api/television | Récupérer toutes les séries |
+| GET | /api/television/:id | Récupérer une série spécifique |
+| POST | /api/television | Créer une nouvelle série |
+| PUT | /api/television/:id | Mettre à jour une série |
+| DELETE | /api/television/:id | Supprimer une série |
 
-Exemples de requêtes :
+### Interface GraphQL
+
+Le point d'entrée GraphQL est disponible à `http://localhost:3000/graphql`
+
+#### Exemples de Requêtes
 
 ```graphql
-# Obtenir tous les films
+# Récupérer la liste des films
 query {
-  movies {
+  getAllCinema {
     id
     title
-    description
+    director
+    releaseYear
+    genre
   }
 }
 
-# Obtenir un film spécifique
+# Récupérer un film par ID
 query {
-  movie(id: "1") {
-    id
+  getCinemaById(id: "1") {
     title
-    description
+    synopsis
+    rating
   }
 }
 
-# Créer un film
+# Créer un nouveau film
 mutation {
-  createMovie(input: {
-    title: "Nouveau Film"
-    description: "Description du nouveau film"
-  }) {
-    movie {
-      id
-      title
-      description
+  addCinema(
+    input: {
+      title: "Le Nouveau Chef-d'œuvre"
+      director: "Réalisateur Connu"
+      releaseYear: 2023
+      genre: "Science-Fiction"
+      synopsis: "Un film révolutionnaire"
     }
+  ) {
+    id
+    title
     success
   }
 }
+
+# Récupérer la liste des séries
+query {
+  getAllTelevision {
+    id
+    title
+    seasons
+    creator
+  }
+}
 ```
 
-## Dépannage
+## Structure des Données
 
-### Problèmes de Connexion Kafka
+### Modèle Film
 
-Si vous rencontrez des erreurs de connexion Kafka comme `getaddrinfo EAI_AGAIN kafka` ou `Connection error: getaddrinfo EAI_AGAIN kafka`, cela signifie que l'application essaie de se connecter à un broker Kafka avec le nom d'hôte "kafka" qui n'existe pas.
-
-Ce projet inclut maintenant une fonction de résolution de nom d'hôte personnalisée qui mappe automatiquement `kafka` vers `localhost`. Si vous voyez toujours cette erreur, essayez ces solutions :
-
-1. Exécutez d'abord l'utilitaire de vérification Kafka pour vérifier la connectivité :
-```bash
-npm run kafka-check
+```javascript
+{
+  id: String,
+  title: String,
+  director: String,
+  releaseYear: Number,
+  genre: String,
+  synopsis: String,
+  rating: Number
+}
 ```
 
-Cet utilitaire va :
-- Vérifier si Kafka est disponible sur localhost:9092
-- Vérifier si les topics requis existent et les créer si nécessaire
-- Fournir des informations détaillées sur les erreurs si Kafka n'est pas disponible
+### Modèle Série
 
-2. Si vous avez toujours des problèmes, assurez-vous qu'aucune variable d'environnement comme `KAFKA_BOOTSTRAP_SERVER` n'est définie qui pourrait remplacer votre configuration :
-```bash
-unset KAFKA_BOOTSTRAP_SERVER
+```javascript
+{
+  id: String,
+  title: String,
+  seasons: Number,
+  episodes: Number,
+  creator: String,
+  startYear: Number,
+  endYear: Number,
+  status: String,
+  synopsis: String
+}
 ```
 
-3. Si vous utilisez Docker ou un environnement différent où le broker Kafka n'est pas sur localhost :
-   - Mettez à jour l'adresse du broker dans tous les fichiers pour correspondre à votre environnement
-   - Ajustez la fonction de résolution de nom d'hôte personnalisée dans chaque fichier pour mapper correctement
+## Détails d'Implémentation
 
-### Résolution Manuelle du Nom d'Hôte
+### Communication gRPC
 
-Si la résolution automatique du nom d'hôte ne fonctionne pas, vous pouvez ajouter une entrée manuelle dans votre fichier hosts :
+Les services backend utilisent gRPC pour une communication efficace et typée :
 
-```bash
-# Sur Windows, éditer C:\Windows\System32\drivers\etc\hosts
-echo "127.0.0.1 kafka" >> C:\Windows\System32\drivers\etc\hosts
+```proto
+// Exemple simplifié du fichier .proto pour le service cinématographique
+service CinemaService {
+  rpc GetAllCinema (Empty) returns (CinemaList);
+  rpc GetCinemaById (CinemaId) returns (Cinema);
+  rpc CreateCinema (Cinema) returns (CinemaResponse);
+}
+
+message Cinema {
+  string id = 1;
+  string title = 2;
+  string director = 3;
+  int32 releaseYear = 4;
+  string genre = 5;
+  string synopsis = 6;
+  float rating = 7;
+}
 ```
 
+### Communication par Événements
 
-## Détails de l'Architecture
+Les services publient des événements sur les canaux Kafka pour informer les autres services des changements importants :
 
-- **Communication gRPC** : Utilisée pour la communication entre services
-- **Intégration Kafka** : Permet la communication asynchrone entre les services
-- **Passerelle API** : Expose des API REST et GraphQL unifiées aux clients
-- **Stockage en Mémoire** : À des fins de démonstration (peut être remplacé par une base de données) 
+```javascript
+// Exemple de production d'événements
+const { Kafka } = require('kafkajs');
+
+const kafka = new Kafka({
+  clientId: 'cinema-service',
+  brokers: ['localhost:9092']
+});
+
+const producer = kafka.producer();
+
+async function publishEvent(event) {
+  await producer.connect();
+  await producer.send({
+    topic: 'cinema-events',
+    messages: [
+      { value: JSON.stringify(event) }
+    ],
+  });
+}
+```
+
+## Résolution des Problèmes Courants
+
+### Problèmes de Connexion à Kafka
+
+Si vous rencontrez des erreurs de connexion comme `ECONNREFUSED`:
+
+1. **Vérifier que Kafka est bien démarré**:
+   ```bash
+   # Lister les topics pour vérifier que Kafka répond
+   bin\windows\kafka-topics.bat --list --bootstrap-server localhost:9092
+   ```
+
+2. **Problèmes avec les noms d'hôtes**:
+   - Essayez de changer les brokers à `127.0.0.1` au lieu de `localhost` dans le code
+   - Ajoutez une entrée dans votre fichier hosts local si nécessaire
+
+3. **Vérifier les ports**:
+   - Assurez-vous que le port 9092 est disponible et non bloqué par un pare-feu
+
+### Échecs de Connexion gRPC
+
+Si les services ne peuvent pas communiquer via gRPC:
+
+1. **Vérifier que les services sont démarrés** dans le bon ordre
+2. **Déboguer avec les options de traçage gRPC**:
+   ```javascript
+   const grpc = require('@grpc/grpc-js');
+   grpc.setLogVerbosity(grpc.logVerbosity.DEBUG);
+   ```
+
+## Modèles de Conception Utilisés
+
+- **API Gateway** : Point d'entrée unique pour les clients, simplifiant l'accès aux microservices
+- **Event-Driven Architecture** : Communication asynchrone via Kafka pour le découplage
+- **Backend for Frontend (BFF)** : La Gateway adapte les réponses selon les besoins des clients
+- **Circuit Breaker** : Protection contre les défaillances en cascade
