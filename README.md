@@ -4,8 +4,6 @@ Ce projet implémente une architecture moderne de microservices utilisant Node.j
 
 ## Architecture du Système
 
-![Architecture](https://via.placeholder.com/800x400?text=Architecture+Microservices)
-
 L'architecture se compose de :
 
 - **Service Contenu Cinématographique** : Gestion des données relatives aux films
