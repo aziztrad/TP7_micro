@@ -1,0 +1,45 @@
+syntax = "proto3";
+package movie;
+
+// Définition du message movie
+message Movie {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  // Ajouter d'autres champs de données pour les films au besoin
+}
+
+// Définition des messages de requête et de réponse pour les méthodes
+message GetMovieRequest {
+  string movie_id = 1;
+}
+
+message GetMovieResponse {
+  Movie movie = 1;
+}
+
+message SearchMoviesRequest {
+  string query = 1;
+}
+
+message SearchMoviesResponse {
+  repeated Movie movies = 1;
+}
+
+// For creating a movie
+message CreateMovieRequest {
+  Movie movie = 1;
+}
+
+message CreateMovieResponse {
+  Movie movie = 1;
+  bool success = 2;
+}
+
+// Définition du service de films
+service MovieService {
+  rpc GetMovie(GetMovieRequest) returns (GetMovieResponse);
+  rpc SearchMovies(SearchMoviesRequest) returns (SearchMoviesResponse);
+  rpc CreateMovie(CreateMovieRequest) returns (CreateMovieResponse);
+  // Ajouter d'autres méthodes au besoin
+} 
